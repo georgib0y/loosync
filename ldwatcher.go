@@ -137,22 +137,29 @@ const (
 // node points to the node of the created or modified node entry in the new Snapshot
 // unless dType is DELETED in which case it points to the node of the old Snapshot
 type LDDiff struct {
+	p     string
 	node  *LDSnapNode
 	dType LDDiffType
 }
 
-func DiffSnaps(s1, s2 LDSnap, diffs chan LDDiff) {
-	diffDirNodes(s1.root, s2.root, diffs)
-	close(diffs)
+func DiffSnaps(s1, s2 LDSnap, diffs chan LDDiff) error {
+	defer close(diffs)
+
+	if s1.rPath != s2.rPath {
+		return fmt.Errorf("s1 root path %s is not eq to s2 root path %s", s1.rPath, s2.rPath)
+	}
+
+	diffDirNodes(s1.root, s2.root, s1.rPath, diffs)
+	return nil
 }
 
-func diffDirNodes(n1, n2 *LDSnapNode, diffs chan LDDiff) {
+func diffDirNodes(n1, n2 *LDSnapNode, p string, diffs chan LDDiff) {
 	// if n1 is nil then this is a new directory so add it and it's children
 	if n1 == nil {
 		for _, c := range n2.children {
-			diffs <- LDDiff{c, CREATED}
+			diffs <- LDDiff{path.Join(p, c.name), c, CREATED}
 			if c.isDir {
-				diffDirNodes(nil, c, diffs)
+				diffDirNodes(nil, c, path.Join(p, c.name), diffs)
 			}
 		}
 
@@ -162,7 +169,7 @@ func diffDirNodes(n1, n2 *LDSnapNode, diffs chan LDDiff) {
 	// check if any files have been deleted
 	for name, c1 := range n1.children {
 		if _, ok := n2.children[name]; !ok {
-			diffs <- LDDiff{c1, DELETED}
+			diffs <- LDDiff{path.Join(p, c1.name), c1, DELETED}
 		}
 	}
 
@@ -170,13 +177,13 @@ func diffDirNodes(n1, n2 *LDSnapNode, diffs chan LDDiff) {
 		c1, ok := n1.children[name]
 
 		if ok && c1.modTime != c2.modTime {
-			diffs <- LDDiff{c2, MODIFIED}
+			diffs <- LDDiff{path.Join(p, c2.name), c2, MODIFIED}
 		} else if !ok {
-			diffs <- LDDiff{c2, CREATED}
+			diffs <- LDDiff{path.Join(p, c2.name), c2, CREATED}
 		}
 
 		if c2.isDir && (c1.isDir || c1 == nil) {
-			diffDirNodes(c1, c2, diffs)
+			diffDirNodes(c1, c2, path.Join(p, c2.name), diffs)
 		}
 	}
 }

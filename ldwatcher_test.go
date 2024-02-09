@@ -451,9 +451,9 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"newFile1": CREATED,
-				"newFile2": CREATED,
-				"newFile3": CREATED,
+				"/newFile1":           CREATED,
+				"/newFile2":           CREATED,
+				"/subfolder/newFile3": CREATED,
 			},
 		},
 		{
@@ -469,8 +469,8 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"file1": MODIFIED,
-				"file3": MODIFIED,
+				"/file1":           MODIFIED,
+				"/subfolder/file3": MODIFIED,
 			},
 		},
 		{
@@ -485,8 +485,8 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"file1":     DELETED,
-				"subfolder": DELETED,
+				"/file1":     DELETED,
+				"/subfolder": DELETED,
 			},
 		},
 	}
@@ -512,11 +512,14 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 			}
 
 			diffs := make(chan LDDiff, MAX_DIFFS)
-			go DiffSnaps(s1, s2, diffs)
+			if err := DiffSnaps(s1, s2, diffs); err != nil {
+				t.Error("DiffSnaps failed with err ", err)
+				return
+			}
 
 			res := map[string]LDDiffType{}
 			for diff := range diffs {
-				res[diff.node.name] = diff.dType
+				res[diff.p] = diff.dType
 			}
 
 			if !reflect.DeepEqual(tC.expected, res) {
