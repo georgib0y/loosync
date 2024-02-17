@@ -1,5 +1,14 @@
 package main
 
+import (
+	"bufio"
+	"log"
+	"os"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
+)
+
 func main() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
