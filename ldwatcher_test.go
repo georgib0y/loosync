@@ -534,31 +534,8 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 func diffMapToString(diffs map[string]LDDiffType) string {
 	out := "{\n"
 	for k, v := range diffs {
-		dTypeStr := "UNKNOWN"
-		switch v {
-		case CREATED:
-			dTypeStr = "CREATED"
-		case MODIFIED:
-			dTypeStr = "MODIFIED"
-		case DELETED:
-			dTypeStr = "DELETED"
-
-		}
-
-		out += fmt.Sprintf("\t{name: %s, dType: %s}\n", k, dTypeStr)
+		out += fmt.Sprintf("\t{name: %s, dType: %s}\n", k, v)
 	}
 
 	return out + "}"
 }
-
-// func TestCompareLDSnaps(t *testing.T) {
-// 	baseSnap := NewLDSnap(NewFilledMockFS())
-
-// }
-
-// func TestNewLDWatcherCreatesLDSnap(t *testing.T) {
-// 	fsys := NewFilledMockFS()
-
-// 	ldw := NewLDWatcher(fsys)
-
-// }

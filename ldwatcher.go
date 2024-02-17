@@ -134,6 +134,19 @@ const (
 	DELETED
 )
 
+func (t LDDiffType) String() string {
+	switch t {
+	case CREATED:
+		return "CREATED"
+	case MODIFIED:
+		return "MODIFIED"
+	case DELETED:
+		return "DELETED"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 // node points to the node of the created or modified node entry in the new Snapshot
 // unless dType is DELETED in which case it points to the node of the old Snapshot
 type LDDiff struct {
