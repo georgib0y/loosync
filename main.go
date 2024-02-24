@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"log"
 	"os"
+<<<<<<< Updated upstream
 	"time"
+=======
+>>>>>>> Stashed changes
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -15,37 +18,26 @@ func main() {
 		log.Fatalln("Could not create new wathcer: ", err)
 		return
 	}
-	defer watcher.Close()
-
-	closed := make(chan bool)
 
 	go func() {
 		for {
 			select {
-			case closing := <-closed:
-				if closing {
-					log.Println("Go func ending")
-					break
+			case event, ok := <-watcher.Events:
+				if !ok {
+					log.Fatalln("Error reading event")
+					return
 				}
-			default:
-				select {
-				case event, ok := <-watcher.Events:
-					if !ok {
-						log.Fatalln("Error reading event")
-						return
-					}
 
-					log.Println(event)
-				case err, ok := <-watcher.Errors:
-					if !ok {
-						log.Fatalln("Error reading error")
-						return
-					}
-
-					log.Println(err)
-				default:
+				log.Println(event)
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					log.Fatalln("Error reading error")
+					return
 				}
+
+				log.Println(err)
 			}
+
 		}
 	}()
 
@@ -60,10 +52,9 @@ func main() {
 	log.Println("wating for input")
 	waitForInput()
 	log.Println("got input")
-	closed <- true
-	time.Sleep(3 * time.Second)
-	log.Println("waited 3 secs")
 
+	watcher.Close()
+	log.Println("Closed")
 }
 
 func waitForInput() {

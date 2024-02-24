@@ -451,9 +451,9 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"/newFile1":           CREATED,
-				"/newFile2":           CREATED,
-				"/subfolder/newFile3": CREATED,
+				"/newFile1":           LD_CREATED,
+				"/newFile2":           LD_CREATED,
+				"/subfolder/newFile3": LD_CREATED,
 			},
 		},
 		{
@@ -469,8 +469,8 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"/file1":           MODIFIED,
-				"/subfolder/file3": MODIFIED,
+				"/file1":           LD_MODIFIED,
+				"/subfolder/file3": LD_MODIFIED,
 			},
 		},
 		{
@@ -485,8 +485,8 @@ func TestDiffSnapsCreateLDDiffs(t *testing.T) {
 				return nil
 			},
 			expected: map[string]LDDiffType{
-				"/file1":     DELETED,
-				"/subfolder": DELETED,
+				"/file1":     LD_DELETED,
+				"/subfolder": LD_DELETED,
 			},
 		},
 	}
@@ -536,11 +536,11 @@ func diffMapToString(diffs map[string]LDDiffType) string {
 	for k, v := range diffs {
 		dTypeStr := "UNKNOWN"
 		switch v {
-		case CREATED:
+		case LD_CREATED:
 			dTypeStr = "CREATED"
-		case MODIFIED:
+		case LD_MODIFIED:
 			dTypeStr = "MODIFIED"
-		case DELETED:
+		case LD_DELETED:
 			dTypeStr = "DELETED"
 
 		}
