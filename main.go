@@ -2,14 +2,9 @@ package main
 
 import (
 	"bufio"
+	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
-<<<<<<< Updated upstream
-	"time"
-=======
->>>>>>> Stashed changes
-
-	"github.com/fsnotify/fsnotify"
 )
 
 func main() {
