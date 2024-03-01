@@ -494,11 +494,19 @@ func TestPollerEmitsFSEvents(t *testing.T) {
 
 			events := map[string]Event{}
 			go func() {
-				for p.open {
+				for p.events != nil && p.errors != nil {
 					select {
-					case event := <-p.events:
+					case event, ok := <-p.events:
+						if !ok {
+							p.events = nil
+							continue
+						}
 						events[event.name] = event
-					case err := <-p.errors:
+					case err, ok := <-p.errors:
+						if !ok {
+							p.errors = nil
+							continue
+						}
 						t.Error("Error while reading diffs: ", err)
 					}
 				}
@@ -514,194 +522,3 @@ func TestPollerEmitsFSEvents(t *testing.T) {
 		})
 	}
 }
-
-// func TestLDSnapFromFS(t *testing.T) {
-// 	fsys := NewFilledMockFS()
-
-// 	s, err := NewLDSnap(fsys, "/")
-
-// 	if err != nil {
-// 		t.Error("Failed to create LDSnap: ", err)
-// 		return
-// 	}
-
-// 	fs.WalkDir(fsys, "/", func(path string, d fs.DirEntry, err error) error {
-// 		if err != nil {
-// 			t.Error("Walk dir failed with err: ", err)
-// 			return err
-// 		}
-
-// 		n, err := s.FindNode(path)
-
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if n.Name() != d.Name() {
-// 			err := fmt.Errorf("Node name %s and DirEntry name %s are not eq", n.Name(), d.Name())
-// 			t.Error(err)
-// 			return err
-// 		}
-
-// 		if n.IsDir() != d.IsDir() {
-// 			err := fmt.Errorf("Node.IsDir() == %t and DirEntry.IsDir == %t are not eq", n.IsDir(), d.IsDir())
-// 			t.Error(err)
-// 			return err
-// 		}
-
-// 		info, err := d.Info()
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if info.ModTime() != n.ModTime() {
-// 			err := fmt.Errorf("Node mod time %s and DirEntry mod time %s are not eq", n.ModTime(), info.ModTime())
-// 			t.Error(err)
-// 			return err
-// 		}
-
-// 		return nil
-// 	})
-// }
-
-// func TestEqualLDSnapsHaveNoDiffs(t *testing.T) {
-// 	fsys := NewFilledMockFS()
-
-// 	// two equal snaps
-// 	s1, err := NewLDSnap(fsys, "/")
-// 	if err != nil {
-// 		t.Error("Could not create snap: ", err)
-// 		return
-// 	}
-
-// 	s2, _ := NewLDSnap(fsys, "/")
-
-// 	diffs := make(chan LDDiff, MAX_DIFFS)
-
-// 	DiffSnaps(s1, s2, diffs)
-
-// 	if len(diffs) > 0 {
-// 		t.Error("Differences found on two equal snaps")
-// 	}
-// }
-
-// func TestDiffSnapsCreateLDDiffs(t *testing.T) {
-// 	testCases := []struct {
-// 		desc     string
-// 		modFunc  func(f *MockFS) error
-// 		expected map[string]LDDiffType
-// 	}{
-// 		{
-// 			desc: "Create files",
-// 			modFunc: func(f *MockFS) error {
-// 				if err := f.AddFile("/", NewMockFile("newFile1")); err != nil {
-// 					return err
-// 				}
-// 				if err := f.AddFile("/", NewMockFile("newFile2")); err != nil {
-// 					return err
-// 				}
-// 				if err := f.AddFile("/subfolder", NewMockFile("newFile3")); err != nil {
-// 					return err
-// 				}
-// 				return nil
-// 			},
-// 			expected: map[string]LDDiffType{
-// 				"/newFile1":           LD_CREATED,
-// 				"/newFile2":           LD_CREATED,
-// 				"/subfolder/newFile3": LD_CREATED,
-// 			},
-// 		},
-// 		{
-// 			desc: "Modify files",
-// 			modFunc: func(f *MockFS) error {
-// 				if err := f.Modify("/file1"); err != nil {
-// 					return err
-// 				}
-
-// 				if err := f.Modify("/subfolder/file3"); err != nil {
-// 					return err
-// 				}
-// 				return nil
-// 			},
-// 			expected: map[string]LDDiffType{
-// 				"/file1":           LD_MODIFIED,
-// 				"/subfolder/file3": LD_MODIFIED,
-// 			},
-// 		},
-// 		{
-// 			desc: "Remove files",
-// 			modFunc: func(f *MockFS) error {
-// 				if err := f.Remove("/file1"); err != nil {
-// 					return err
-// 				}
-// 				if err := f.Remove("/subfolder"); err != nil {
-// 					return err
-// 				}
-// 				return nil
-// 			},
-// 			expected: map[string]LDDiffType{
-// 				"/file1":     LD_DELETED,
-// 				"/subfolder": LD_DELETED,
-// 			},
-// 		},
-// 	}
-// 	for _, tC := range testCases {
-// 		t.Run(tC.desc, func(t *testing.T) {
-// 			fsys := NewFilledMockFS()
-// 			s1, err := NewLDSnap(fsys, "/")
-
-// 			if err != nil {
-// 				t.Error("Failed creating base snap: ", err)
-// 				return
-// 			}
-
-// 			if err = tC.modFunc(&fsys); err != nil {
-// 				t.Error("Failed modifying fsys: ", err)
-// 				return
-// 			}
-
-// 			s2, err := NewLDSnap(fsys, "/")
-// 			if err != nil {
-// 				t.Error("Failed creating second snap: ", err)
-// 				return
-// 			}
-
-// 			diffs := make(chan LDDiff, MAX_DIFFS)
-// 			if err := DiffSnaps(s1, s2, diffs); err != nil {
-// 				t.Error("DiffSnaps failed with err ", err)
-// 				return
-// 			}
-
-// 			res := map[string]LDDiffType{}
-// 			for diff := range diffs {
-// 				res[diff.p] = diff.dType
-// 			}
-
-// 			if !reflect.DeepEqual(tC.expected, res) {
-// 				resStr := diffMapToString(res)
-// 				expStr := diffMapToString(tC.expected)
-// 				t.Errorf("Result:\n%s\n did not eq expected:\n%s", resStr, expStr)
-// 			}
-// 		})
-// 	}
-// }
-
-// func diffMapToString(diffs map[string]LDDiffType) string {
-// 	out := "{\n"
-// 	for k, v := range diffs {
-// 		dTypeStr := "UNKNOWN"
-// 		switch v {
-// 		case LD_CREATED:
-// 			dTypeStr = "CREATED"
-// 		case LD_MODIFIED:
-// 			dTypeStr = "MODIFIED"
-// 		case LD_DELETED:
-// 			dTypeStr = "DELETED"
-
-// 		}
-
-// 		out += fmt.Sprintf("\t{name: %s, dType: %s}\n", k, dTypeStr)
-// 	}
-
-// 	return out + "}"
-// }
