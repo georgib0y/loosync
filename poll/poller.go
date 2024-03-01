@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"path"
 	"time"
 )
@@ -125,9 +126,12 @@ func (p *Poller) diffNodes(orig, next *node, currPath string) {
 				p.diffNodes(nil, c, path.Join(currPath, c.name))
 			}
 		}
+
+		return
 	}
 
 	// check if any files have been deleted
+	// for name, c := range orig.children {
 	for name, c := range orig.children {
 		if _, ok := next.children[name]; !ok {
 			p.events <- Event{path.Join(currPath, c.name), DELETED}
@@ -148,6 +152,7 @@ func (p *Poller) diffNodes(orig, next *node, currPath string) {
 		}
 
 		if cNext.isDir && (cOrig.isDir || cOrig == nil) {
+			log.Println("Entering into subdir: ", path.Join(currPath, cNext.name))
 			p.diffNodes(cOrig, cNext, path.Join(currPath, cNext.name))
 		}
 	}

@@ -505,6 +505,7 @@ func TestPollerEmitsFSEvents(t *testing.T) {
 			}()
 
 			p.diff()
+			time.Sleep(100 * time.Millisecond)
 			p.Close()
 
 			if !reflect.DeepEqual(tC.expected, events) {
