@@ -62,7 +62,6 @@ type Poller struct {
 	node   *node
 	events chan Event
 	errors chan error
-	open   bool
 }
 
 func NewPoller(fsys fs.ReadDirFS, root string) (*Poller, error) {
@@ -84,23 +83,14 @@ func NewPoller(fsys fs.ReadDirFS, root string) (*Poller, error) {
 	events := make(chan Event)
 	errors := make(chan error)
 
-	return &Poller{fsys, root, nil, events, errors, true}, nil
+	return &Poller{fsys, root, nil, events, errors}, nil
 }
 
 func (p *Poller) Close() error {
-	p.open = false
 	close(p.events)
 	close(p.errors)
 
 	return nil
-}
-
-func (p *Poller) loop() {
-	for p.open {
-		// diff then sleep for x amount
-		p.diff()
-		time.Sleep(POLLER_INTERVAL)
-	}
 }
 
 func (p *Poller) diff() {

@@ -41,7 +41,7 @@ func NewJsonDB(path string) (JsonDB, error) {
 			return JsonDB{}, err
 		}
 	case os.ErrNotExist:
-		event = map[string]Event{}
+		events = map[string]Event{}
 	default:
 		return JsonDB{}, err
 	}
