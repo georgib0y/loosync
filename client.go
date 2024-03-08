@@ -1,9 +1,12 @@
 package main
 
-import (
-	"github.com/fsnotify/fsnotify"
-)
+import ()
+
+type Watcher interface {
+	Events() chan Event
+	Errors() chan error
+}
 
 type Client struct {
-	watcher fsnotify.Watcher
+	watcher Watcher
 }
