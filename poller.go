@@ -64,6 +64,14 @@ type Poller struct {
 	errors chan error
 }
 
+func (p *Poller) Events() chan Event {
+	return p.events
+}
+
+func (p *Poller) Errors() chan error {
+	return p.errors
+}
+
 func NewPoller(fsys fs.ReadDirFS, root string) (*Poller, error) {
 	// check if root is not a directory
 	rDir, err := fsys.Open(root)
