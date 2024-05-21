@@ -1,0 +1,29 @@
+#+title: Loosync Thinking
+
+* Overall Goals
+- Unobtrusive synchronisation between a pair of devices
+- Staging directories that contain the up-to-date state of the other device, updated periodically so that the device can likely instantly fetch any change needed
+- Secure transferal of information and files, so that im not hacked
+- Easily register and unregister directories to be synced
+- Have the ability to ignore files or file patterns (.gitignore vibes)
+* Server/daemon
+** Responsibilities
+- Receiving sync requests from another device and sending back the changed files
+- Periodically sending sync requests to devices that are online and storing changed files into the sync dir
+- Receiving requests from the client cli to pull changes into the local
+** Processes
+*** Send/Receive a sync request from other device
+1. A - Start HTTP server listening on some port
+2. B - Generate file directory list of sync dir and make a sync request to A
+3. A - Diff list with this device's local directory and return a list of added, changed and removed files
+4. B - Prepare sync dir for new files (remove files/create directories if needed)
+5. B - Request changed/added files from A
+6. A - Bundle and compress files and then return to B
+7. B - Unpacks changed/added files into sync dir
+* Client/CLI
+** Responsibilities
+- Making requests to the daemon to pull and list files from the sync directory into the local directory
+* Concerns
+** Security
+- How can i stop myself from leaking all my files?
+*
